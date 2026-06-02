@@ -1,0 +1,23 @@
+name: "Callback Phishing: Phone Number in Image Attachment with Financial Urgency Language"
+description: "Detects inbound emails from first-time senders containing no links, financial urgency language in the body, and an image attachment where OCR identifies a phone number. Indicative of callback phishing attacks designed to bypass URL-based defenses by directing victims to call a fraudulent support line."
+type: "rule"
+severity: "medium"
+source: |
+  type.inbound
+    and profile.by_sender().prevalence in ("new", "outlier")
+    and not profile.by_sender().solicited
+
+    and any(attachments,
+  .file_extension in~ ("doc", "pdf", "png", "jpeg")
+    and any(file.explode(.), 
+      regex.icontains(.scan.ocr.raw, '\d{3}[-.\s]?\d{3}[-.\s]?\d{4}')
+    )
+      )
+    and length(body.links) == 0
+     and (
+    strings.icontains(body.plain.raw, "renew")
+    or strings.icontains(body.plain.raw, "charged")
+    or strings.icontains(body.plain.raw, "subscription")
+    or strings.icontains(body.plain.raw, "invoice")
+  )
+   
