@@ -13,6 +13,7 @@ source: |
         and length(body.links) == 1
     
        // email conatins a link to a legit but commonly abused file sharing platform 
+        and strings.icontains(subject, "Action Required")
         and any(body.links, 
         .href_url.domain.root_domain in (
           "docs.google.com",
