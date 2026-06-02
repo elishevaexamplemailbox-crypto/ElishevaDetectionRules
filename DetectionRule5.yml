@@ -7,7 +7,7 @@ source: |
 
     //the sendeers display name matches a VIP in the org
         and any($org_vips,
-            strings.icontains(sender.display_name, .display_name))
+            strings.icontains(sender.email.email, .email))
 
         //no links and no attachments
         and length (body.links) == 0
