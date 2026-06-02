@@ -4,15 +4,21 @@ type: "rule"
 severity: "medium"
 source: |
   type.inbound
+
+    // first time sender
     and profile.by_sender().prevalence in ("new", "outlier")
     and not profile.by_sender().solicited
 
+    // check for image attachments containing a phone number detected via OCR
     and any(attachments,
-  .file_extension in~ ("doc", "pdf", "png", "jpeg")
+    .file_extension in~ ("doc", "pdf", "png", "jpeg")
     and any(file.explode(.), 
       regex.icontains(.scan.ocr.raw, '\d{3}[-.\s]?\d{3}[-.\s]?\d{4}')
     )
       )
+      
+    // no links in the body - atacker is delibertly trying to avoid URLs to bypass link detection 
+    // body of the email contains urgency 
     and length(body.links) == 0
      and (
     strings.icontains(body.plain.raw, "renew")
