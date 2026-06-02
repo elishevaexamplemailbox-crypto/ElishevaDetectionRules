@@ -1,5 +1,9 @@
-/Credential Phishing: Fake IT Password Reset from Unknown Sender 
-type.inbound
+name: "Credential Phishing: Fake IT Password Reset from Unknown Sender"
+description: "Identifies inbound messages from a first-time sender using an IT or  support display name, containing password or account reset language, where link analysis confirms the destination is a credential phishing page."
+type: "rule"
+severity: "medium"
+source: |
+    type.inbound
 
 //confirms sender of email is from an IT or Support alias
 and (
