@@ -1,38 +1,24 @@
 name: "Credential Phishing: Fake IT Password Reset from Unknown Sender"
-description: "Identifies inbound messages from a first-time sender using an IT or  support display name, containing password or account reset language, where link analysis confirms the destination is a credential phishing page."
+description: "Identifies inbound messages from a first-time sender using an IT or support display name, containing password or account reset language, where link analysis confirms the destination is a credential phishing page."
 type: "rule"
 severity: "medium"
 source: |
-    type.inbound
-
-//confirms sender of email is from an IT or Support alias
-and (
+  type.inbound
+  and (
     strings.icontains(sender.display_name, "IT")
     or strings.icontains(sender.display_name, "helpdesk")
     or strings.icontains(sender.display_name, "support")
-)
-and sender.email.domain.root_domain not in $org_domains
-
-//body of the email conatins lanaguge that email is about password/accout reset action
-and (
+  )
+  and sender.email.domain.root_domain not in $org_domains
+  and (
     strings.icontains(body.plain.raw, "password")
     or strings.icontains(body.plain.raw, "reset")
     or strings.icontains(body.plain.raw, "verify your account")
-)
-//detect any links to credential phishing pages
-and any(body.links, 
- all([ml.link_analysis(.)],
-    .credphish.disposition == "phishing"
-     and .credphish.brand.confidence in ("medium", "high")
- )
-)
-//first time sender
-and (
-  (
-    sender.email.domain.root_domain in $free_email_providers
-    and sender.email.email not in $sender_emails
   )
-)
-
-
-
+  and any(body.links,
+    ml.link_analysis(., mode="aggressive").credphish.disposition == "phishing"
+    and ml.link_analysis(., mode="aggressive").credphish.confidence
+      in ("medium", "high")
+  )
+  and profile.by_sender().prevalence in ("new", "outlier")
+  and not profile.by_sender().solicited
