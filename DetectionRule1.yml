@@ -5,32 +5,32 @@ severity: "high"
 source: |
     type.inbound
   
-   // first time sender
-    and profile.by_sender().prevalence in ("new", "outlier")
-    and not profile.by_sender().solicited
+       // first time sender
+        and profile.by_sender().prevalence in ("new", "outlier")
+        and not profile.by_sender().solicited
 
-   // exactly one link — attacker keeping the email clean to avoid detection
-    and length(body.links) == 1
+       // exactly one link — attacker keeping the email clean to avoid detection
+        and length(body.links) == 1
     
-   // email conatins a link to a legit but commonly abused file sharing platform 
-    and any(body.links, 
-    .href_url.domain.root_domain in (
-      "docs.google.com",
-      "drive.google.com",
-      "dropbox.com",
-      "onedrive.live.com",
-      "sharepoint.com",
-      "canva.com",
-      "notion.so"
-    )
+       // email conatins a link to a legit but commonly abused file sharing platform 
+        and any(body.links, 
+        .href_url.domain.root_domain in (
+          "docs.google.com",
+          "drive.google.com",
+          "dropbox.com",
+          "onedrive.live.com",
+          "sharepoint.com",
+          "canva.com",
+          "notion.so"
+        )
 
-    //link analysis visits the page and confirms phiishing behavior 
-    and (ml.link_analysis(.,mode="aggressive").credphish.disposition == "phishing"
-    and ml.link_analysis(., mode="aggressive").credphish.confidence
-      in ("medium", "high")
+        //link analysis visits the page and confirms phiishing behavior 
+        and (ml.link_analysis(.,mode="aggressive").credphish.disposition == "phishing"
+        and ml.link_analysis(., mode="aggressive").credphish.confidence
+          in ("medium", "high")
       
-     // final destination after redirects is not a well known legitimate site
-    and ml.link_analysis(., mode="aggressive").effective_url.domain.root_domain
-      not in $tranco_1m
+         // final destination after redirects is not a well known legitimate site
+        and ml.link_analysis(., mode="aggressive").effective_url.domain.root_domain
+          not in $tranco_1m
+        )
     )
-)
