@@ -1,0 +1,39 @@
+name: "Social Engineering: Free Gift Card Lure with QR Code from Unknown Sender"
+description: "Detects inbound emails from first-time senders using gift card or prize language with a QR code image attachment. A common social engineering technique that hides the malicious URL inside a QR code to bypass traditional URL scanners entirely."
+type: "rule"
+severity: "medium"
+source: |
+  type.inbound
+
+  // first time sender who we never contacted first
+  and profile.by_sender().prevalence in ("new", "outlier")
+  and not profile.by_sender().solicited
+
+  // no links in the body — URL is hidden inside the QR code
+  and length(body.links) == 0
+
+  // subject or body contains gift card or prize language
+  and 
+   (strings.icontains(body.plain.raw, "congratulations")
+    or strings.icontains(body.plain.raw, "winner")
+    or strings.icontains(body.plain.raw, "gift card")
+    or strings.icontains(body.plain.raw, "reward")
+    or strings.icontains(body.plain.raw, "selected")
+    or strings.icontains(body.plain.raw, "gift card")
+    or strings.icontains(body.plain.raw, "claim your")
+    or strings.icontains(body.plain.raw, "you have been selected")
+    or strings.icontains(body.plain.raw, "prize")
+  )
+
+  // image attachment contains a QR code
+  and any(attachments,
+    .file_type in $file_types_images
+
+    // decode the QR code and check where it points
+    and any(file.explode(.),
+      .scan.qr.url.url is not null
+
+      // QR code destination is not a well known legitimate site
+     and .scan.qr.url.domain.root_domain not in $tranco_1m
+    )
+  )
