@@ -1,0 +1,7 @@
+name: "Test Rule: Flag Emails with Test Keyword"
+description: "Simple test rule to confirm mail flow is working. Flags any inbound email containing the word TESTFLAG in the subject."
+type: "rule"
+severity: "low"
+source: |
+  type.inbound
+  and strings.icontains(subject, "TESTFLAG")
