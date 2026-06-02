@@ -1,0 +1,34 @@
+/Credential Phishing: Fake IT Password Reset from Unknown Sender 
+type.inbound
+
+//confirms sender of email is from an IT or Support alias
+and (
+    strings.icontains(sender.display_name, "IT")
+    or strings.icontains(sender.display_name, "helpdesk")
+    or strings.icontains(sender.display_name, "support")
+)
+and sender.email.domain.root_domain not in $org_domains
+
+//body of the email conatins lanaguge that email is about password/accout reset action
+and (
+    strings.icontains(body.plain.raw, "password")
+    or strings.icontains(body.plain.raw, "reset")
+    or strings.icontains(body.plain.raw, "verify your account")
+)
+//detect any links to credential phishing pages
+and any(body.links, 
+ all([ml.link_analysis(.)],
+    .credphish.disposition == "phishing"
+     and .credphish.brand.confidence in ("medium", "high")
+ )
+)
+//first time sender
+and (
+  (
+    sender.email.domain.root_domain in $free_email_providers
+    and sender.email.email not in $sender_emails
+  )
+)
+
+
+
