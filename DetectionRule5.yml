@@ -2,7 +2,7 @@ name: "BEC: Executive Impersonation with Financial or Social Engineering Intent"
 description: "Detects inbound emails where the sender display name matches a known organizational executive but originates from an external domain, contains no links or attachments, and NLU classifies the intent as BEC, extortion, or job scam. Indicative of CEO fraud, wire transfer scams, and social engineering attacks that bypass technical controls entirely."
 type: "rule"
 severity: "high"
-source |
+source: |
     type.inbound
 
     //the sendeers display name matches a VIP in the org
