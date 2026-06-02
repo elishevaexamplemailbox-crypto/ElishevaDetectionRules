@@ -1,24 +1,36 @@
-name: "Credential Phishing: Fake IT Password Reset from Unknown Sender"
-description: "Identifies inbound messages from a first-time sender using an IT or support display name, containing password or account reset language, where link analysis confirms the destination is a credential phishing page."
+name: "Credential Phishing: Legitimate File Sharing Platform Used as Phishing Hop"
+description: "Detects inbound emails from first-time senders containing links to legitimate file sharing platforms where link analysis confirms the destination exhibits credential phishing behavior. Indicative of attackers abusing trusted platforms to bypass URL reputation checks."
 type: "rule"
-severity: "medium"
+severity: "high"
 source: |
-  type.inbound
-  and (
-    strings.icontains(sender.display_name, "IT")
-    or strings.icontains(sender.display_name, "helpdesk")
-    or strings.icontains(sender.display_name, "support")
-  )
-  and sender.email.domain.root_domain not in $org_domains
-  and (
-    strings.icontains(body.plain.raw, "password")
-    or strings.icontains(body.plain.raw, "reset")
-    or strings.icontains(body.plain.raw, "verify your account")
-  )
-  and any(body.links,
-    ml.link_analysis(., mode="aggressive").credphish.disposition == "phishing"
+    type.inbound
+  
+   // first time sender
+    and profile.by_sender().prevalence in ("new", "outlier")
+    and not profile.by_sender().solicited
+
+   // exactly one link — attacker keeping the email clean to avoid detection
+    and length(body.links) == 1
+    
+   // email conatins a link to a legit but commonly abused file sharing platform 
+    and any(body.links, 
+    .href_url.domain.root_domain in (
+      "docs.google.com",
+      "drive.google.com",
+      "dropbox.com",
+      "onedrive.live.com",
+      "sharepoint.com",
+      "canva.com",
+      "notion.so"
+    )
+
+    //link analysis visits the page and confirms phiishing behavior 
+    and (ml.link_analysis(.,mode="aggressive").credphish.disposition == "phishing"
     and ml.link_analysis(., mode="aggressive").credphish.confidence
       in ("medium", "high")
-  )
-  and profile.by_sender().prevalence in ("new", "outlier")
-  and not profile.by_sender().solicited
+      
+     // final destination after redirects is not a well known legitimate site
+    and ml.link_analysis(., mode="aggressive").effective_url.domain.root_domain
+      not in $tranco_1m
+    )
+)
