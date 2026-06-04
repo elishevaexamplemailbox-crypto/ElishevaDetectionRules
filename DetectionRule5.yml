@@ -5,7 +5,7 @@ severity: "high"
 source: |
     type.inbound
 
-    //the sendeers display name matches a VIP in the org
+       //the sendeers display name matches a VIP in the org
         and any($org_vips,
             strings.icontains(sender.email.email, .email))
 
