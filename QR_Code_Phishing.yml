@@ -25,7 +25,7 @@ source: |
     or strings.icontains(body.plain.raw, "prize")
   )
 
-  // image attachment contains a QR code
+  // image attachment contains a QR code as an attachment file
   and any(attachments,
     .file_type in $file_types_images
 
